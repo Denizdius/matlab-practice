@@ -1,0 +1,89 @@
+
+close all;
+clc;
+clearvars;
+%%
+
+syms t k
+% Original Signal
+f0 = 10; 
+original_signal = sin(2*pi*f0*t);
+
+% Impulse Train for Sampling
+Fs = 20;
+N = 201;
+k_values = linspace(0,1,N);
+sampled_signal = zeros(size(k_values));
+impulse_train_plot = zeros(size(k_values));
+
+
+% sample the original using Impulse Train
+
+for i = 1:length(k_values)
+    % Create an impulse train using the heaviside function
+    impulse_train = heaviside(t-k_values(i)/Fs);
+    impulse_train_plot(i) = double(subs(impulse_train,t,k_values(i)));
+    % Evaluate the product of original_signal and impulse_train 
+    sampled_signal_sym  = subs(original_signal * impulse_train,t,k_values(i));
+    % Convert the symbolic expression to double
+    sampled_signal(i) = double(sampled_signal_sym);
+end
+
+dft_of_sample = abs(fftshift(fft(sampled_signal)/N));
+fft_time = linspace(-10,10,N);
+
+% Plot the results
+figure;
+subplot(4, 1, 1);
+fplot(original_signal, [0, 1]);
+title('Original Signal');
+
+subplot(4,1,2);
+stem(k_values,impulse_train_plot);
+title("Impulse_ Train");
+
+subplot(4,1,3);
+stem(k_values,sampled_signal);
+title("Sampled Signal");
+
+subplot(4,1,4);
+plot(fft_time,dft_of_sample);
+title("dft of sample");
+
+%%
+
+up=2;
+down=2;
+
+upsampled_signal = upsample(sampled_signal,up);
+downsampled_signal = downsample(sampled_signal,down);
+
+up_lenght = length(upsampled_signal);
+down_lenght = length(downsampled_signal);
+
+dft_of_upsample = abs(fftshift(fft(upsampled_signal)))/N ;
+ftt_lenght = length(dft_of_upsample);
+dft_of_downsample = abs(fftshift(fft(downsampled_signal)))/N;
+
+up_time = linspace(0,450,length(upsampled_signal));
+down_time = linspace(0,100,length(downsampled_signal));
+fft_time = linspace(-10,10,ftt_lenght);
+
+
+figure;
+subplot(2,2,1);
+stem(down_time,downsampled_signal);
+title("downsampled signal");
+
+subplot(2,2,2);
+stem(up_time,upsampled_signal);
+title("upsampled signal");
+
+subplot(2,2,3);
+plot(down_time,dft_of_downsample);
+title("DFT of downsample")
+
+subplot(2,2,4);
+plot(fft_time,dft_of_upsample);
+title("DFT of upsample");
+
